@@ -1,8 +1,8 @@
-import { IconMessageCircle } from '@tabler/icons-react';
 import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
 import { authOptions } from '@/src/lib/auth-options';
 import { prisma } from '@/src/lib/prisma';
+import ChatInterface from '@/src/components/ChatInterface';
 
 type ChatPageProps = {
   searchParams: Promise<{
@@ -62,22 +62,22 @@ export default async function ChatPage({ searchParams }: ChatPageProps) {
           <p className="mt-1 text-sm text-slate-400">Ask questions about metric changes, breakdowns, and trends.</p>
         </div>
 
-        <div className="flex flex-1 items-center justify-center rounded-xl border border-dashed border-white/15 bg-[#030915]/50">
-          <div className="flex flex-col items-center text-center">
-            <IconMessageCircle className="mb-3 h-8 w-8 text-cyan-300" />
-            {activeConversation ? (
-              <>
-                <p className="text-sm text-slate-300">This conversation has {activeConversation.messages.length} messages.</p>
-                <p className="mt-1 text-xs text-slate-500">Wire your existing message input/rendering here.</p>
-              </>
-            ) : (
-              <>
-                <p className="text-sm text-slate-300">No conversation selected yet.</p>
-                <p className="mt-1 text-xs text-slate-500">Use "Start new conversation" in the sidebar.</p>
-              </>
-            )}
+        {activeConversation ? (
+          <ChatInterface
+            conversationId={activeConversation.id}
+            initialMessages={activeConversation.messages.map((m) => ({
+              ...m,
+              createdAt: m.createdAt,
+            }))}
+          />
+        ) : (
+          <div className="flex flex-1 items-center justify-center rounded-xl border border-dashed border-white/15 bg-[#030915]/50">
+            <div className="flex flex-col items-center text-center">
+              <p className="text-sm text-slate-300">No conversation selected yet.</p>
+              <p className="mt-1 text-xs text-slate-500">Use &ldquo;Start new conversation&rdquo; in the sidebar.</p>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </section>
   );

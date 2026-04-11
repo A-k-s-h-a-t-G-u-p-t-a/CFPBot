@@ -1,0 +1,15 @@
+TransactionID: Unique identifier for every transaction. Used for COUNT-based volume metrics. Never use this column for amounts.
+AccountID: The customer account identifier. Use COUNT(DISTINCT AccountID) when counting unique customers or accounts.
+TransactionAmount: Monetary value of the transaction in GBP. Use SUM for revenue, AVG for average ticket size. Always numeric.
+TransactionDate: Timestamp of when the transaction occurred. Always use this column for time-based filtering and grouping. Cast to DATE when grouping by day.
+TransactionType: Either "Credit" (money received by bank) or "Debit" (money spent). Filter to TransactionType = 'Credit' for revenue metrics.
+Location: UK city where the transaction was made. Use for geographic breakdown and regional analysis. Common values: London, Manchester, Birmingham.
+DeviceID: Identifier of the device used for the transaction. Useful for device-level fraud analysis and channel verification.
+MerchantID: Identifier of the merchant involved. Use for merchant-level breakdown and top merchant analysis.
+Channel: How the transaction was initiated. Values: Online, Mobile, Branch, ATM. Primary dimension for channel performance analysis.
+CustomerAge: Age of the customer in years at the time of transaction. Use for demographic segmentation (e.g., under 30, 30-50, over 50).
+CustomerOccupation: Job category of the customer. Use for customer segment analysis and profiling.
+TransactionDuration: How long the transaction took in seconds. Unusually high values may indicate network issues or fraud.
+LoginAttempts: Number of login attempts before the transaction completed. Values above 5 are strong fraud indicators. Exclude these from clean revenue metrics.
+AccountBalance: Account balance at the time of the transaction in GBP. Use AVG for balance health metrics across segments.
+PreviousTransactionDate: Date of the customer's most recent prior transaction. Use to calculate days since last activity for churn risk (threshold: 90 days).
