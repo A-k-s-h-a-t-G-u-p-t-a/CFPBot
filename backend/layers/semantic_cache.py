@@ -1,15 +1,20 @@
 import os
 import pickle
 import time
+import hashlib
 from typing import Optional
 
 import numpy as np
 from dotenv import load_dotenv
-from fastembed import TextEmbedding
+
+try:
+    from fastembed import TextEmbedding
+except ImportError:
+    TextEmbedding = None
 
 load_dotenv()
 
-_model = TextEmbedding(model_name="BAAI/bge-small-en-v1.5")
+_model = TextEmbedding(model_name="BAAI/bge-small-en-v1.5") if TextEmbedding else None
 _SNAPSHOT = os.path.join(os.path.dirname(__file__), "../data/cache_snapshot.pkl")
 
 
@@ -58,7 +63,15 @@ class SemanticCache:
         return f"{int(self._hits / total * 100)}%" if total else "0%"
 
     def _embed(self, text: str) -> np.ndarray:
-        return np.array(list(_model.embed([text]))[0])
+        if _model is not None:
+            return np.array(list(_model.embed([text]))[0])
+
+        # Fallback for environments where fastembed is unavailable (e.g., serverless runtime).
+        # Deterministic hash-based vector keeps cache logic functional without external model deps.
+        digest = hashlib.sha256(text.encode("utf-8")).digest()
+        vector = np.frombuffer(digest, dtype=np.uint8).astype(np.float32)
+        norm = np.linalg.norm(vector)
+        return vector if norm == 0 else vector / norm
 
     def _save_snapshot(self):
         try:
@@ -81,3 +94,6 @@ semantic_cache = SemanticCache(
     threshold=float(os.getenv("CACHE_THRESHOLD", 0.92)),
     ttl_hours=float(os.getenv("SEMANTIC_CACHE_TTL_HOURS", 1.0)),
 )
+
+if _model is None:
+    print("[SemanticCache] fastembed not installed; using fallback embeddings")
