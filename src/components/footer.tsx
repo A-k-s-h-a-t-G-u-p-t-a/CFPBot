@@ -52,7 +52,7 @@ export default function Footer() {
 
       {/* Copyright */}
       <div className="relative z-10 mt-12 border-t border-gray-800 pt-6 text-sm text-center text-gray-500">
-        © 2025 MetricLens. All rights reserved.
+        © 2026 MetricLens. All rights reserved.
       </div>
 
     </div>
