@@ -14,7 +14,8 @@ The core design principle: **the LLM never calculates numbers — it only narrat
 
 ## Architecture at a Glance
 
-![MetricLens System Architecture](docs/architecture.png)
+<img width="1407" height="826" alt="Architecture diagram - visual selection" src="https://github.com/user-attachments/assets/f8fd23d9-74ba-42e1-9022-f03cf32c8624" />
+
 
 ---
 
