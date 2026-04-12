@@ -37,117 +37,14 @@ Every user question passes through a deterministic, layered pipeline before a si
 <img width="1376" height="768" alt="image" src="https://github.com/user-attachments/assets/0c60f2ef-fbaa-420d-982c-7eda8fe2684f" />
 
 
-
-```
-User Question: "Why did mobile transactions drop last week?"
-        │
-        ▼
-┌──────────────────────────────────────────────────────────────────┐
-│  LAYER 0 — Semantic Cache                                         │
-│  Cosine similarity check against all prior questions             │
-│  Similarity ≥ 0.92  →  return cached answer instantly            │
-│  Miss  →  continue to Layer 1                                    │
-└──────────────────────────────────────────────────────────────────┘
-        │ cache miss
-        ▼
-┌──────────────────────────────────────────────────────────────────┐
-│  LAYER 1 — Query Understanding                                    │
-│  Intent classifier  →  entity linker  →  time parser             │
-│  Gemini called ONLY when ambiguity_score > 0.7                   │
-│  Follow-up resolution via prior_request from session             │
-│                                                                   │
-│  Output → StructuredRequest                                       │
-│  { intent, metrics[], dimensions[], time_window,                 │
-│    output_type, ambiguity_score, prior_request }                 │
-└──────────────────────────────────────────────────────────────────┘
-        │ ambiguity_score > 0.7  →  return clarifying question
-        ▼
-┌──────────────────────────────────────────────────────────────────┐
-│  LAYER 2 — Semantic Layer                                         │
-│  Resolves user metric terms → SQL fragments + business rules     │
-│  "Revenue" = SUM(Amount) WHERE Type = 'Credit'  (always)        │
-│  "Unique customers" = COUNT(DISTINCT AccountID) (never row count)│
-│  Fraud exclusion applied unless question asks about fraud        │
-│                                                                   │
-│  Output → ResolvedMetric                                          │
-│  { sql_fragment, joins, filters, time_logic, lineage }           │
-└──────────────────────────────────────────────────────────────────┘
-        │
-        ▼
-┌──────────────────────────────────────────────────────────────────┐
-│  LAYER 3 — Query Planner                                          │
-│  Decides routing and decomposition strategy:                     │
-│    raw_sql   →  live PostgreSQL analytics query                  │
-│    rag       →  definition / policy retrieval path               │
-│  Plans WoW/MoM comparison baselines, driver decomposition        │
-│                                                                   │
-│  Output → ExecutionPlan                                           │
-│  { route, queries[], needs_driver_analysis,                      │
-│    needs_significance_test, comparison_period }                  │
-└──────────────────────────────────────────────────────────────────┘
-        │
-        ▼
-┌──────────────────────────────────────────────────────────────────┐
-│  LAYER 3b — Agentic SQL Generator + Validator                     │
-│  SQL generated from ExecutionPlan context via Gemini             │
-│  Schema-aware validation pass  (no LLM on validation path)      │
-│  Retries up to 2× with repair context on failure                 │
-│  Gemini calls rate-limited with exponential backoff              │
-└──────────────────────────────────────────────────────────────────┘
-        │
-        ▼
-┌──────────────────────────────────────────────────────────────────┐
-│  LAYER 4 — Query Execution (PostgreSQL via Neon)                  │
-│  Read-only execution with capped result volume                   │
-│  Result cache for repeated identical SQL queries                 │
-│  Fallback error handling with structured error codes             │
-│                                                                   │
-│  Output → RawResults { rows[], columns[], execution_ms }         │
-└──────────────────────────────────────────────────────────────────┘
-        │
-        ▼
-┌──────────────────────────────────────────────────────────────────┐
-│  LAYER 5 — Insight Engine  (pure Python / NumPy — zero LLM)      │
-│  trend_detector       →  direction, % change, peak/trough        │
-│  outlier_detector     →  z-score statistical anomaly flagging    │
-│  contribution_analyzer→  top driver identification               │
-│  chart_recommender    →  bar / line / table from intent + shape  │
-│                                                                   │
-│  Output → StructuredInsights                                      │
-│  { key_finding, anomalies[], drivers[], trends[],                │
-│    chart_spec, source_tables[], execution_ms }                   │
-└──────────────────────────────────────────────────────────────────┘
-        │
-        ▼
-┌──────────────────────────────────────────────────────────────────┐
-│  LAYER 6 — Response Generator  (Gemini)                           │
-│  Reads StructuredInsights — does NOT recalculate any figure      │
-│  Produces plain-English narrative with source citations          │
-│  Guard rail pass filters any hallucinated number                 │
-│  Final payload stored in semantic cache                          │
-│                                                                   │
-│  Output → { answer, chart_spec, confidence, sources[], trace }   │
-└──────────────────────────────────────────────────────────────────┘
-        │
-        ▼
-   Structured answer rendered in chat UI
-```
-
 ---
 
 ## RAG Path — Definitions & Policy Questions
 
 When a question is definitional ("What does chargeback rate mean?"), the pipeline bypasses SQL entirely and routes to retrieval-augmented generation:
 
-```
-Question  →  Semantic vector retrieval
-                 ├── schema_docs     (column definitions)
-                 ├── metric_docs     (business metric definitions)
-                 └── sample_queries  (similar past Q&A examples)
-                            │
-                            ▼
-               Context injected → Gemini → Narrative answer
-```
+<img width="1376" height="768" alt="image" src="https://github.com/user-attachments/assets/c686a580-1a74-4c7c-867d-ee26d3af2b71" />
+
 
 ---
 
