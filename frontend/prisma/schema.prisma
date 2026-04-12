@@ -12,6 +12,12 @@ datasource db {
   provider = "postgresql"
 }
 
+enum MessageRole {
+  USER
+  ASSISTANT
+  SYSTEM
+}
+
 model User {
   id             String         @id @default(cuid())
   email          String         @unique
@@ -47,10 +53,4 @@ model Message {
 
   @@index([conversationId])
   @@index([userId])
-}
-
-enum MessageRole {
-  USER
-  ASSISTANT
-  SYSTEM
 }
