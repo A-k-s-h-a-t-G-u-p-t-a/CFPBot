@@ -61,10 +61,7 @@ export default async function ChatPage({ searchParams }: ChatPageProps) {
           <ChatInterface
             key={activeConversation.id}
             conversationId={activeConversation.id}
-            initialMessages={activeConversation.messages.map((m) => ({
-              ...m,
-              createdAt: m.createdAt,
-            }))}
+            initialMessages={activeConversation.messages}
           />
         ) : (
           <div className="flex flex-1 flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-neutral-800">
