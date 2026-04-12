@@ -34,7 +34,9 @@ Executes against live transaction data → extracts trends, outliers, drivers
 
 Every user question passes through a deterministic, layered pipeline before a single LLM token is generated for the response. This makes the system fast, auditable, and hallucination-resistant.
 
-<img width="2816" height="1536" alt="Image_20260412_233819" src="https://github.com/user-attachments/assets/59b6aeb1-6980-4d9b-a90e-8a209c9df964" />
+<img width="1376" height="768" alt="image" src="https://github.com/user-attachments/assets/0c60f2ef-fbaa-420d-982c-7eda8fe2684f" />
+
+
 
 ```
 User Question: "Why did mobile transactions drop last week?"
