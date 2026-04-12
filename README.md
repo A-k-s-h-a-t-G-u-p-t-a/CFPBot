@@ -43,7 +43,8 @@ Every user question passes through a deterministic, layered pipeline before a si
 
 When a question is definitional ("What does chargeback rate mean?"), the pipeline bypasses SQL entirely and routes to retrieval-augmented generation:
 
-<img width="1376" height="768" alt="image" src="https://github.com/user-attachments/assets/9ba80989-7032-4c2c-aa5d-d490b6a89cf5" />
+<img width="1376" height="768" alt="image" src="https://github.com/user-attachments/assets/45e66dc8-5a67-4cdd-b644-3ebd5755d242" />
+
 
 
 ---
