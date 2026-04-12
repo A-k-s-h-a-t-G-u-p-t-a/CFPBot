@@ -1,7 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { IconChevronDown, IconChevronUp, IconAlertCircle } from "@tabler/icons-react";
+import {
+  IconChevronDown,
+  IconChevronUp,
+  IconAlertTriangle,
+  IconWifiOff,
+  IconRefresh,
+} from "@tabler/icons-react";
 
 // ── Types mirroring FastAPI response ───────────────────────────────────────
 
@@ -37,10 +43,10 @@ interface FastAPIAnswer {
 }
 
 interface Props {
-  raw: string; // JSON string stored in Prisma
+  raw: string;
 }
 
-// ── Mini bar chart (no library needed) ─────────────────────────────────────
+// ── Mini bar chart ─────────────────────────────────────────────────────────
 
 function MiniBarChart({ spec }: { spec: ChartSpec }) {
   if (!spec.data?.length) return null;
@@ -54,30 +60,44 @@ function MiniBarChart({ spec }: { spec: ChartSpec }) {
           {spec.title}
         </p>
       )}
-      <div className="space-y-2">
+      <div className="space-y-2.5">
         {spec.data.map((bar, i) => (
           <div key={i} className="flex items-center gap-3">
             <span className="w-28 shrink-0 truncate text-right text-xs text-slate-400">
               {bar.label}
             </span>
-            <div className="relative flex-1 overflow-hidden rounded-full bg-white/5 h-5">
+            <div className="relative flex-1 overflow-hidden rounded-full bg-white/5 h-4">
               <div
-                className="h-full rounded-full bg-gradient-to-r from-cyan-500 to-blue-500"
+                className="h-full rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 transition-all duration-700"
                 style={{ width: `${(bar.value / max) * 100}%` }}
               />
             </div>
-            <span className="w-20 shrink-0 text-right text-xs text-slate-300">
+            <span className="w-20 shrink-0 text-right text-xs font-medium text-slate-300">
               {bar.value.toLocaleString()}
             </span>
           </div>
         ))}
       </div>
-      {(spec.x_label || spec.y_label) && (
-        <p className="mt-2 text-right text-[10px] text-slate-500">
-          {spec.y_label}
-        </p>
+      {spec.y_label && (
+        <p className="mt-2 text-right text-[10px] text-slate-500">{spec.y_label}</p>
       )}
     </div>
+  );
+}
+
+// ── Confidence badge ───────────────────────────────────────────────────────
+
+function ConfidenceBadge({ value }: { value: number }) {
+  const pct = Math.round(value * 100);
+  const color =
+    pct >= 80 ? "text-emerald-400 bg-emerald-500/10 ring-emerald-500/20" :
+    pct >= 50 ? "text-amber-400 bg-amber-500/10 ring-amber-500/20" :
+                "text-red-400 bg-red-500/10 ring-red-500/20";
+
+  return (
+    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium ring-1 ${color}`}>
+      {pct}% confidence
+    </span>
   );
 }
 
@@ -90,24 +110,41 @@ export default function AnswerCard({ raw }: Props) {
   try {
     answer = JSON.parse(raw) as FastAPIAnswer;
   } catch {
-    return (
-      <p className="text-sm text-red-400">Could not parse response.</p>
-    );
+    return <p className="text-sm text-red-400">Could not parse response.</p>;
   }
 
-  // ── Error response ──
+  // ── Error response ──────────────────────────────────────────────────────
   if (answer.error_code) {
+    // Simplify verbose "Backend unreachable: FastAPI 500: {...}" messages
+    let displayMessage = answer.message ?? "Something went wrong.";
+    if (
+      displayMessage.startsWith("Backend unreachable:") ||
+      displayMessage.includes("FastAPI") ||
+      displayMessage.includes("INTERNAL_ERROR")
+    ) {
+      displayMessage = "The analytics backend is currently unavailable.";
+    }
+
+    const isNetworkError = answer.error_code === "LLM_UNAVAILABLE";
+
     return (
-      <div className="flex gap-3 rounded-xl border border-red-500/20 bg-red-900/10 p-4">
-        <IconAlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-400" />
-        <div className="space-y-1">
-          <p className="text-sm font-medium text-red-300">
-            {answer.message ?? "Something went wrong."}
-          </p>
-          {answer.suggestion && (
-            <p className="text-xs text-slate-400">{answer.suggestion}</p>
+      <div className="flex gap-3 rounded-xl border border-red-500/15 bg-red-950/20 p-4">
+        <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-red-500/10 ring-1 ring-red-500/20">
+          {isNetworkError ? (
+            <IconWifiOff className="h-3.5 w-3.5 text-red-400" />
+          ) : (
+            <IconAlertTriangle className="h-3.5 w-3.5 text-red-400" />
           )}
-          <p className="text-[10px] uppercase tracking-wide text-red-500/60">
+        </div>
+        <div className="min-w-0 space-y-1.5">
+          <p className="text-sm font-medium text-red-300">{displayMessage}</p>
+          {answer.suggestion && (
+            <p className="flex items-center gap-1.5 text-xs text-slate-400">
+              <IconRefresh className="h-3 w-3 shrink-0 text-slate-500" />
+              {answer.suggestion}
+            </p>
+          )}
+          <p className="text-[10px] font-mono uppercase tracking-widest text-red-500/50">
             {answer.error_code}
           </p>
         </div>
@@ -115,6 +152,7 @@ export default function AnswerCard({ raw }: Props) {
     );
   }
 
+  // ── Success response ────────────────────────────────────────────────────
   const narrative = answer.answer ?? "No insights returned.";
 
   return (
@@ -122,23 +160,24 @@ export default function AnswerCard({ raw }: Props) {
       {/* Narrative */}
       <p className="text-sm leading-relaxed text-slate-200">{narrative}</p>
 
+      {/* Confidence */}
+      {answer.confidence !== undefined && (
+        <ConfidenceBadge value={answer.confidence} />
+      )}
+
       {/* Anomalies */}
       {answer.anomaly_flag && (
-        <div className="rounded-lg border border-yellow-500/20 bg-yellow-900/10 px-3 py-2">
-          <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-yellow-400">
-            Anomalies
+        <div className="rounded-lg border border-amber-500/20 bg-amber-900/10 px-3 py-2.5">
+          <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-amber-400">
+            Anomaly Detected
           </p>
-          <ul className="space-y-1">
-            <li className="text-xs text-slate-300">
-              • {answer.anomaly_flag}
-            </li>
-          </ul>
+          <p className="text-xs text-slate-300">• {answer.anomaly_flag}</p>
         </div>
       )}
 
-      {/* Follow Up */}
+      {/* Follow-up suggestion */}
       {answer.follow_up && (
-        <p className="mt-2 text-xs text-slate-400 italic">
+        <p className="text-xs italic text-slate-400">
           ↳ {answer.follow_up}
         </p>
       )}
@@ -146,14 +185,14 @@ export default function AnswerCard({ raw }: Props) {
       {/* Chart */}
       {answer.chart_data && <MiniBarChart spec={answer.chart_data} />}
 
-      {/* SQL source (collapsible) */}
+      {/* SQL source */}
       {answer.sql_executed && (
-        <div className="rounded-xl border border-white/10 bg-[#030915]/60">
+        <div className="rounded-xl border border-white/8 bg-[#030915]/60 overflow-hidden">
           <button
             onClick={() => setSqlOpen((v) => !v)}
-            className="flex w-full items-center justify-between px-4 py-2 text-xs text-slate-400 hover:text-slate-200"
+            className="flex w-full items-center justify-between px-4 py-2.5 text-xs text-slate-500 transition-colors hover:text-slate-300"
           >
-            <span>SQL source</span>
+            <span className="font-medium">View SQL</span>
             {sqlOpen ? (
               <IconChevronUp className="h-3 w-3" />
             ) : (
@@ -161,7 +200,7 @@ export default function AnswerCard({ raw }: Props) {
             )}
           </button>
           {sqlOpen && (
-            <pre className="overflow-x-auto px-4 pb-4 text-[11px] text-cyan-300">
+            <pre className="overflow-x-auto border-t border-white/5 px-4 pb-4 pt-3 text-[11px] leading-relaxed text-cyan-300">
               {answer.sql_executed}
             </pre>
           )}
@@ -170,8 +209,8 @@ export default function AnswerCard({ raw }: Props) {
 
       {/* Timing */}
       {answer.execution_ms !== undefined && (
-        <p className="text-right text-[10px] text-slate-500">
-          {answer.execution_ms} ms
+        <p className="text-right text-[10px] text-slate-600">
+          ⚡ {answer.execution_ms} ms
         </p>
       )}
     </div>

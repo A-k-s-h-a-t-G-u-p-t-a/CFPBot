@@ -1,14 +1,14 @@
 "use client";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   IconBrandTabler,
-  IconMessageCircle,
   IconPlus,
   IconSearch,
   IconSettings,
   IconRobot,
+  IconMenu2,
+  IconX,
 } from "@tabler/icons-react";
-import { motion } from "framer-motion";
 import { cn } from "@/src/lib/utils";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -34,190 +34,206 @@ export function SidebarDemo() {
     {
       label: "Chat",
       href: "/chat",
-      icon: <IconBrandTabler className="h-5 w-5 shrink-0 text-neutral-700 dark:text-neutral-200" />,
+      icon: <IconBrandTabler className="h-4 w-4 shrink-0" />,
     },
     {
       label: "My Workspace",
       href: "/myworkspace",
-      icon: <IconSettings className="h-5 w-5 shrink-0 text-neutral-700 dark:text-neutral-200" />,
+      icon: <IconSettings className="h-4 w-4 shrink-0" />,
     },
     {
-      label: "Ai Assistant",
+      label: "AI Assistant",
       href: "/ai-assistant",
-      icon: <IconRobot className="h-5 w-5 shrink-0 text-neutral-700 dark:text-neutral-200" />,
+      icon: <IconRobot className="h-4 w-4 shrink-0" />,
     },
   ];
 
+  const fetchConversations = useCallback(async () => {
+    if (!isChatPage) return;
+    const res = await fetch("/api/conversations", { method: "GET", cache: "no-store" });
+    if (!res.ok) { setConversations([]); return; }
+    const data = await res.json();
+    setConversations(data.conversations ?? []);
+  }, [isChatPage]);
+
+  // Initial fetch
+  useEffect(() => {
+    void fetchConversations();
+  }, [fetchConversations]);
+
+  // Listen for conversation updates (new message sent / title changed)
   useEffect(() => {
     if (!isChatPage) return;
-
-    const fetchConversations = async () => {
-      const res = await fetch("/api/conversations", {
-        method: "GET",
-        cache: "no-store",
-      });
-
-      if (!res.ok) {
-        setConversations([]);
-        return;
-      }
-
-      const data = await res.json();
-      setConversations(data.conversations ?? []);
-    };
-
-    void fetchConversations();
-  }, [isChatPage]);
+    const handler = () => void fetchConversations();
+    window.addEventListener("ml:conversation-updated", handler);
+    return () => window.removeEventListener("ml:conversation-updated", handler);
+  }, [isChatPage, fetchConversations]);
 
   const filteredConversations = useMemo(() => {
     const normalized = query.trim().toLowerCase();
     if (!normalized) return conversations;
-
-    return conversations.filter((conversation) =>
-      (conversation.title ?? "New conversation").toLowerCase().includes(normalized)
+    return conversations.filter((c) =>
+      (c.title ?? "New conversation").toLowerCase().includes(normalized)
     );
   }, [conversations, query]);
 
   const handleCreateConversation = async () => {
     if (creating) return;
-
     setCreating(true);
     const res = await fetch("/api/conversations", { method: "POST" });
-
     if (res.ok) {
       const data = await res.json();
+      // Add to list immediately — no refresh needed
+      setConversations((prev) => [
+        { id: data.conversation.id, title: null, updatedAt: new Date().toISOString() },
+        ...prev,
+      ]);
       router.push(`/chat?conversationId=${data.conversation.id}`);
-      router.refresh();
     }
-
     setCreating(false);
   };
 
   return (
     <div
       className={cn(
-        "group relative flex flex-col overflow-hidden border-r border-neutral-900 bg-gray-100 transition-all duration-300 dark:border-neutral-700 dark:bg-neutral-900",
-        "hover:w-64",
-        open ? "w-64" : "w-16"
+        "relative flex flex-col border-r border-neutral-800 bg-neutral-900 transition-all duration-300 ease-in-out shrink-0",
+        open ? "w-60" : "w-14"
       )}
-      onMouseEnter={() => setOpen(true)}
-      onMouseLeave={() => setOpen(false)}
     >
-      <div className="flex flex-1 flex-col justify-between gap-6 px-2 py-6">
-        <div className="flex flex-1 flex-col overflow-y-auto">
-          {open ? <Logo /> : <LogoIcon />}
-          <div className="mt-8 flex flex-col gap-2">
-            {links.map((link, idx) => (
-              <SidebarLink key={idx} link={link} labelVisible={open} />
-            ))}
-          </div>
+      <div className="flex flex-1 flex-col overflow-hidden px-2 py-3">
 
-          {isChatPage && (
-            <div className="mt-6">
-              <button
-                type="button"
-                onClick={handleCreateConversation}
-                className="flex w-full items-center gap-2 rounded px-3 py-2 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-200 disabled:opacity-50 dark:text-neutral-200 dark:hover:bg-neutral-800"
-                disabled={creating}
-              >
-                <IconPlus className="h-4 w-4 shrink-0" />
-                {open && <span>{creating ? "Creating..." : "Start new conversation"}</span>}
-              </button>
-
-              {open && (
-                <div className="mt-3 space-y-3">
-                  <div className="relative">
-                    <IconSearch className="pointer-events-none absolute left-2 top-2.5 h-4 w-4 text-neutral-500" />
-                    <input
-                      value={query}
-                      onChange={(e) => setQuery(e.target.value)}
-                      placeholder="Search conversations"
-                      className="w-full rounded border border-neutral-300 bg-white py-2 pl-8 pr-2 text-xs text-neutral-800 outline-none focus:border-cyan-500 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100"
-                    />
-                  </div>
-
-                  <div className="space-y-1">
-                    <p className="px-2 text-[10px] uppercase tracking-wide text-neutral-500">
-                      Previous conversations
-                    </p>
-                    {filteredConversations.map((conversation) => {
-                      const isActive = conversation.id === activeConversationId;
-                      return (
-                        <Link
-                          key={conversation.id}
-                          href={`/chat?conversationId=${conversation.id}`}
-                          className={cn(
-                            "block rounded px-2 py-2 text-xs text-neutral-700 hover:bg-neutral-200 dark:text-neutral-200 dark:hover:bg-neutral-800",
-                            isActive && "bg-neutral-200 dark:bg-neutral-800"
-                          )}
-                        >
-                          <div className="flex items-center gap-2">
-                            <IconMessageCircle className="h-3.5 w-3.5 shrink-0" />
-                            <span className="truncate">{conversation.title ?? "New conversation"}</span>
-                          </div>
-                        </Link>
-                      );
-                    })}
-                    {filteredConversations.length === 0 && (
-                      <p className="px-2 py-2 text-xs text-neutral-500">No conversations yet.</p>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
+        {/* Toggle button + Logo row */}
+        <div className={cn("flex items-center gap-3 mb-4 px-1", open ? "justify-between" : "justify-center")}>
+          {open && <Logo />}
+          <button
+            onClick={() => setOpen(!open)}
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-neutral-400 transition-colors hover:bg-neutral-800 hover:text-white"
+            aria-label="Toggle sidebar"
+          >
+            {open ? <IconX className="h-4 w-4" /> : <IconMenu2 className="h-4 w-4" />}
+          </button>
         </div>
-        
+
+        {/* Nav links */}
+        <div className="flex flex-col gap-1">
+          {links.map((link, idx) => (
+            <NavLink
+              key={idx}
+              href={link.href}
+              icon={link.icon}
+              label={link.label}
+              active={pathname === link.href}
+              showLabel={open}
+            />
+          ))}
+        </div>
+
+        {/* Conversation list */}
+        {isChatPage && (
+          <div className="mt-3 border-t border-neutral-800 pt-3 flex flex-col gap-1 min-h-0">
+            {/* New conversation */}
+            <button
+              type="button"
+              onClick={handleCreateConversation}
+              disabled={creating}
+              title={open ? undefined : "New conversation"}
+              className={cn(
+                "flex items-center gap-2 rounded-md px-2 py-1.5 text-neutral-400 transition-colors hover:bg-neutral-800 hover:text-white disabled:opacity-50",
+                !open && "justify-center"
+              )}
+            >
+              <IconPlus className="h-4 w-4 shrink-0" />
+              {open && <span className="text-[13px]">{creating ? "Creating…" : "New conversation"}</span>}
+            </button>
+
+            {open && (
+              <>
+                {/* Search */}
+                <div className="relative mt-1">
+                  <IconSearch className="pointer-events-none absolute left-2.5 top-2 h-3 w-3 text-neutral-500" />
+                  <input
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    placeholder="Search conversations"
+                    className="w-full rounded-md border border-neutral-700 bg-neutral-800 py-1.5 pl-7 pr-2 text-[13px] text-neutral-200 placeholder:text-neutral-500 outline-none focus:border-neutral-600"
+                  />
+                </div>
+
+                {/* List */}
+                <div className="mt-2 overflow-y-auto flex flex-col">
+                  <p className="px-2 pb-1 text-[11px] font-medium text-neutral-500">
+                    Recents
+                  </p>
+                  {filteredConversations.map((c) => {
+                    const isActive = c.id === activeConversationId;
+                    return (
+                      <Link
+                        key={c.id}
+                        href={`/chat?conversationId=${c.id}`}
+                        className={cn(
+                          "block truncate rounded-md px-2 py-1.5 text-[13px] transition-colors",
+                          isActive
+                            ? "bg-neutral-700 text-white"
+                            : "text-neutral-400 hover:bg-neutral-800 hover:text-neutral-200"
+                        )}
+                      >
+                        {c.title ?? "New conversation"}
+                      </Link>
+                    );
+                  })}
+                  {filteredConversations.length === 0 && (
+                    <p className="px-2 py-1.5 text-[13px] text-neutral-600">No conversations yet.</p>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
 }
 
-export const Logo = () => (
-  <a
-    href="#"
-    className="flex items-center space-x-2 py-1 text-sm font-normal text-black dark:text-white"
-  >
-    <div className="h-5 w-6 rounded bg-black dark:bg-white" />
-    <motion.span
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      className="whitespace-nowrap font-medium"
+function NavLink({
+  href,
+  icon,
+  label,
+  active,
+  showLabel,
+}: {
+  href: string;
+  icon: React.ReactNode;
+  label: string;
+  active: boolean;
+  showLabel: boolean;
+}) {
+  return (
+    <Link
+      href={href}
+      title={showLabel ? undefined : label}
+      className={cn(
+        "flex items-center gap-2.5 rounded-md px-2 py-1.5 transition-colors",
+        active
+          ? "bg-neutral-700 text-white"
+          : "text-neutral-400 hover:bg-neutral-800 hover:text-neutral-200",
+        !showLabel && "justify-center"
+      )}
     >
-      MetricLens.
-    </motion.span>
+      <span className="shrink-0">{icon}</span>
+      {showLabel && <span className="text-[13px]">{label}</span>}
+    </Link>
+  );
+}
+
+export const Logo = () => (
+  <a href="#" className="flex items-center gap-2 py-1 text-sm font-normal text-white">
+    <div className="h-5 w-6 rounded bg-white shrink-0" />
+    <span className="whitespace-nowrap font-medium">MetricLens.</span>
   </a>
 );
 
 export const LogoIcon = () => (
   <a href="#" className="flex items-center py-1">
-    <div className="h-5 w-6 rounded bg-black dark:bg-white" />
+    <div className="h-5 w-6 rounded bg-white" />
   </a>
 );
-
-export interface Links {
-  label: string;
-  href: string;
-  icon: React.ReactNode;
-}
-
-interface SidebarLinkProps {
-  link: Links;
-  className?: string;
-  labelVisible?: boolean;
-}
-
-export function SidebarLink({ link, className, labelVisible = true }: SidebarLinkProps) {
-  return (
-    <Link
-      href={link.href}
-      className={cn(
-        "flex items-center gap-3 rounded px-3 py-2 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-200 dark:text-neutral-200 dark:hover:bg-neutral-800",
-        className
-      )}
-    >
-      {link.icon}
-      {labelVisible && <span>{link.label}</span>}
-    </Link>
-  );
-}
