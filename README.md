@@ -24,8 +24,10 @@ The core design principle: **the LLM never calculates numbers — it only narrat
 
 Every user question travels through a deterministic pipeline before a single LLM token is generated. This guarantees accuracy — numbers are never hallucinated.
 
-```
 <img width="2816" height="1536" alt="Image_20260412_233819" src="https://github.com/user-attachments/assets/59b6aeb1-6980-4d9b-a90e-8a209c9df964" />
+
+```
+
 
 User Question: "Why did mobile transactions drop last week?"
         │
