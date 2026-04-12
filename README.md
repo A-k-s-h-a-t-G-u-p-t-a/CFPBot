@@ -25,7 +25,8 @@ Executes against live transaction data → extracts trends, outliers, drivers
 
 ## Architecture at a Glance
 
-<img width="1406" height="826" alt="MetricLens System Architecture" src="https://github.com/user-attachments/assets/c6cba3f7-e296-439a-8232-3b4699ee53aa" />
+<img width="1025" height="576" alt="image" src="https://github.com/user-attachments/assets/68750ce9-2040-4ee4-8760-907ca642fe13" />
+
 
 ---
 
