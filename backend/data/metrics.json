@@ -1,0 +1,81 @@
+{
+  "revenue": {
+    "label": "Revenue",
+    "column": "TransactionAmount",
+    "aggregation": "SUM",
+    "filter": "TransactionType = 'Credit'",
+    "joins": [],
+    "time_column": "TransactionDate",
+    "description": "Total money received from credit transactions",
+    "unit": "GBP",
+    "lineage": ["transactions.TransactionAmount", "transactions.TransactionType"],
+    "business_rules": [
+      "Exclude transactions where LoginAttempts > 5",
+      "Only count completed credit transactions"
+    ]
+  },
+  "transaction_volume": {
+    "label": "Transaction Volume",
+    "column": "TransactionID",
+    "aggregation": "COUNT",
+    "filter": null,
+    "joins": [],
+    "time_column": "TransactionDate",
+    "description": "Total number of transactions in the period",
+    "unit": "count",
+    "lineage": ["transactions.TransactionID"],
+    "business_rules": []
+  },
+  "average_transaction": {
+    "label": "Average Transaction Value",
+    "column": "TransactionAmount",
+    "aggregation": "AVG",
+    "filter": null,
+    "joins": [],
+    "time_column": "TransactionDate",
+    "description": "Mean transaction amount across all transaction types",
+    "unit": "GBP",
+    "lineage": ["transactions.TransactionAmount"],
+    "business_rules": []
+  },
+  "churn_risk": {
+    "label": "Churn Risk Accounts",
+    "column": "AccountID",
+    "aggregation": "COUNT",
+    "filter": "PreviousTransactionDate < CURRENT_DATE - INTERVAL '90 days'",
+    "joins": [],
+    "time_column": "PreviousTransactionDate",
+    "description": "Number of accounts with no activity in the last 90 days",
+    "unit": "accounts",
+    "lineage": ["transactions.AccountID", "transactions.PreviousTransactionDate"],
+    "business_rules": [
+      "Use COUNT(DISTINCT AccountID) to avoid double-counting"
+    ]
+  },
+  "top_channel": {
+    "label": "Top Channel",
+    "column": "Channel",
+    "aggregation": "COUNT",
+    "filter": null,
+    "joins": [],
+    "time_column": "TransactionDate",
+    "description": "The transaction channel with the highest volume",
+    "unit": "channel name",
+    "lineage": ["transactions.Channel", "transactions.TransactionID"],
+    "business_rules": [
+      "Group by Channel, order by COUNT DESC, return top result"
+    ]
+  },
+  "fraud_indicators": {
+    "label": "Fraud Indicator Transactions",
+    "column": "TransactionID",
+    "aggregation": "COUNT",
+    "filter": "LoginAttempts > 5",
+    "joins": [],
+    "time_column": "TransactionDate",
+    "description": "Transactions flagged by high login attempt count, indicating potential fraud",
+    "unit": "count",
+    "lineage": ["transactions.LoginAttempts", "transactions.TransactionID"],
+    "business_rules": []
+  }
+}

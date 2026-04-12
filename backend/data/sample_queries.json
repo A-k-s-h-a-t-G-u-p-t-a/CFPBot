@@ -1,0 +1,42 @@
+[
+  {
+    "question": "Why did transaction volume drop last month?",
+    "intent": "driver_analysis",
+    "sql": "SELECT Channel, COUNT(*) as volume, CAST(TransactionDate AS DATE) as day FROM transactions WHERE TransactionDate >= CURRENT_DATE - INTERVAL '60 days' GROUP BY Channel, day ORDER BY day, volume DESC"
+  },
+  {
+    "question": "Compare mobile vs branch transactions this month",
+    "intent": "compare",
+    "sql": "SELECT Channel, COUNT(*) as count, ROUND(100.0 * COUNT(*) / SUM(COUNT(*)) OVER (), 1) as pct FROM transactions WHERE Channel IN ('Mobile', 'Branch') AND TransactionDate >= DATE_TRUNC('month', CURRENT_DATE) GROUP BY Channel ORDER BY count DESC"
+  },
+  {
+    "question": "Break down total transactions by channel",
+    "intent": "breakdown",
+    "sql": "SELECT Channel, COUNT(*) as count, ROUND(100.0 * COUNT(*) / SUM(COUNT(*)) OVER (), 1) as pct FROM transactions GROUP BY Channel ORDER BY count DESC"
+  },
+  {
+    "question": "Which location has the highest average transaction?",
+    "intent": "breakdown",
+    "sql": "SELECT Location, ROUND(AVG(TransactionAmount), 2) as avg_amount, COUNT(*) as num_transactions FROM transactions GROUP BY Location ORDER BY avg_amount DESC LIMIT 5"
+  },
+  {
+    "question": "Show me weekly transaction trend for the last 6 weeks",
+    "intent": "trend",
+    "sql": "SELECT DATE_TRUNC('week', TransactionDate) as week, COUNT(*) as volume, SUM(TransactionAmount) as revenue FROM transactions WHERE TransactionDate >= CURRENT_DATE - INTERVAL '42 days' GROUP BY week ORDER BY week"
+  },
+  {
+    "question": "What is the total revenue this week vs last week?",
+    "intent": "compare",
+    "sql": "SELECT CASE WHEN TransactionDate >= CURRENT_DATE - INTERVAL '7 days' THEN 'this_week' ELSE 'last_week' END as period, SUM(TransactionAmount) as revenue, COUNT(*) as volume FROM transactions WHERE TransactionDate >= CURRENT_DATE - INTERVAL '14 days' AND TransactionType = 'Credit' GROUP BY period"
+  },
+  {
+    "question": "How many accounts are at churn risk?",
+    "intent": "summary",
+    "sql": "SELECT COUNT(DISTINCT AccountID) as churn_risk_accounts FROM transactions WHERE PreviousTransactionDate < CURRENT_DATE - INTERVAL '90 days'"
+  },
+  {
+    "question": "Show fraud indicator transactions by channel",
+    "intent": "breakdown",
+    "sql": "SELECT Channel, COUNT(*) as flagged_transactions FROM transactions WHERE LoginAttempts > 5 GROUP BY Channel ORDER BY flagged_transactions DESC"
+  }
+]
