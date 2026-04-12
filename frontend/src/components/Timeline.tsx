@@ -125,13 +125,10 @@ const CompareMockup = () => (
         {[
           { metric: "Revenue",      current: "£2.4M", prev: "£2.1M", change: "+14.3%", up: true  },
           { metric: "Churn Rate",   current: "2.3%",  prev: "1.9%",  change: "+0.4pp", up: false },
-          { metric: "NPS Score",    current: "67",    prev: "71",    change: "−4 pts", up: false },
+          { metric: "NPS Score",    current: "67",    prev: "71",    change: "−4 pts",  up: false },
           { metric: "Open Tickets", current: "143",   prev: "189",   change: "−24.3%", up: true  },
         ].map(({ metric, current, prev, change, up }, i) => (
-          <tr
-            key={metric}
-            className={i < 3 ? "border-b border-neutral-800/50" : ""}
-          >
+          <tr key={metric} className={i < 3 ? "border-b border-neutral-800/50" : ""}>
             <td className="px-5 py-3">{metric}</td>
             <td className="px-4 py-3 text-right font-mono text-neutral-100">{current}</td>
             <td className="px-4 py-3 text-right font-mono text-neutral-500">{prev}</td>
@@ -145,7 +142,7 @@ const CompareMockup = () => (
   </div>
 );
 
-/* ── Timeline data ───────────────────────────────────────────────── */
+/* ── Export ──────────────────────────────────────────────────────── */
 export function TimelineDemo() {
   const data = [
     {
