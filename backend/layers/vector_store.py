@@ -22,7 +22,14 @@ def _connect() -> psycopg.Connection:
     return psycopg.connect(_DATABASE_URL)
 
 
+_VECTOR_SEARCH_DISABLED = False
+
+
 def _query_collection(collection: str, question: str, top_k: int) -> str:
+    global _VECTOR_SEARCH_DISABLED
+    if _VECTOR_SEARCH_DISABLED:
+        return ""
+
     try:
         embedding = embed_text(question)
         embedding_str = "[" + ",".join(str(x) for x in embedding) + "]"
@@ -40,6 +47,10 @@ def _query_collection(collection: str, question: str, top_k: int) -> str:
                 return "\n".join(r[0] for r in rows)
     except Exception as e:
         print(f"[vector_store] collection={collection} error: {e}")
+        error_text = str(e).lower()
+        if "not found for api version" in error_text or "not supported for embedcontent" in error_text:
+            _VECTOR_SEARCH_DISABLED = True
+            print("[vector_store] disabling vector retrieval due to embedding-model incompatibility")
         return ""
 
 

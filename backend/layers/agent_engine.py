@@ -37,6 +37,16 @@ def _json_loads(text: str) -> dict[str, Any]:
     return json.loads(cleaned.strip())
 
 
+async def _safe_gemini_json(prompt: str, system: str = "") -> dict[str, Any] | None:
+    """Return parsed JSON from Gemini, or None on any transient/quota/model failure."""
+    try:
+        response_text = await call_gemini(prompt, system=system, json_mode=True)
+        return _json_loads(response_text)
+    except Exception as exc:
+        print(f"[agent_engine] Gemini unavailable, using fallback path: {exc}")
+        return None
+
+
 def _default_metric(resolved_metrics: list[ResolvedMetric]) -> tuple[str, str, str]:
     if resolved_metrics:
         metric = resolved_metrics[0]
@@ -148,10 +158,9 @@ Return JSON with:
   "confidence": <0.0 to 1.0>
 }}"""
 
-    response_text = await call_gemini(prompt, system=_SYSTEM, json_mode=True)
-
+    result = await _safe_gemini_json(prompt, system=_SYSTEM)
     try:
-        result = _json_loads(response_text)
+        result = result or {}
         sql = str(result.get("sql", "")).strip()
         confidence = float(result.get("confidence", 0.5))
     except Exception:
@@ -176,9 +185,10 @@ Question: {question}
 Failure reason: {reason}
 
 Return a corrected JSON object with sql, rationale, and confidence."""
-        repair_text = await call_gemini(repair_prompt, system=_SYSTEM, json_mode=True)
+        repaired = await _safe_gemini_json(repair_prompt, system=_SYSTEM)
         try:
-            repaired = _json_loads(repair_text)
+            if not repaired:
+                break
             sql = _normalize_sql(str(repaired.get("sql", "")).strip() or sql)
             confidence = float(repaired.get("confidence", 0.3))
         except Exception:
@@ -204,11 +214,13 @@ Database error: {str(exc)}
 
 Return corrected JSON with sql, rationale, and confidence. Use only columns from orders.
 """
-            repair_text = await call_gemini(repair_prompt, system=_SYSTEM, json_mode=True)
-            repaired = _json_loads(repair_text)
-            repaired_sql = _normalize_sql(str(repaired.get("sql", "")).strip())
-            valid, _ = validate_sql(repaired_sql, ALLOWED_COLUMNS)
-            if not valid:
+            repaired = await _safe_gemini_json(repair_prompt, system=_SYSTEM)
+            if repaired:
+                repaired_sql = _normalize_sql(str(repaired.get("sql", "")).strip())
+                valid, _ = validate_sql(repaired_sql, ALLOWED_COLUMNS)
+                if not valid:
+                    repaired_sql = _fallback_sql(question, structured_req, resolved_metrics)
+            else:
                 repaired_sql = _fallback_sql(question, structured_req, resolved_metrics)
             sql = repaired_sql
             rows = await asyncio.to_thread(execute_analytics_query, sql)
