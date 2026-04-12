@@ -25,7 +25,7 @@ Executes against live transaction data → extracts trends, outliers, drivers
 
 ## Architecture at a Glance
 
-<img width="1407" height="826" alt="MetricLens System Architecture" src="https://github.com/user-attachments/assets/f8fd23d9-74ba-42e1-9022-f03cf32c8624" />
+<img width="1406" height="826" alt="MetricLens System Architecture" src="https://github.com/user-attachments/assets/c6cba3f7-e296-439a-8232-3b4699ee53aa" />
 
 ---
 
@@ -33,8 +33,10 @@ Executes against live transaction data → extracts trends, outliers, drivers
 
 Every user question passes through a deterministic, layered pipeline before a single LLM token is generated for the response. This makes the system fast, auditable, and hallucination-resistant.
 
+<img width="2816" height="1536" alt="Image_20260412_233819" src="https://github.com/user-attachments/assets/59b6aeb1-6980-4d9b-a90e-8a209c9df964" />
+
 ```
-User Question: "Why did revenue drop last week?"
+User Question: "Why did mobile transactions drop last week?"
         │
         ▼
 ┌──────────────────────────────────────────────────────────────────┐
