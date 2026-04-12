@@ -93,15 +93,8 @@ When a question is definitional ("What does chargeback rate mean?"), the pipelin
 | Resilience | Exponential backoff, retry with repair context, structured error codes |
 
 ### Data Model
+<img width="1376" height="768" alt="image" src="https://github.com/user-attachments/assets/43a8ad1e-acb2-45c3-a1ed-dae4117543ea" />
 
-```
-User ──────────────── Conversation ──────────────── Message
- │                          │                           │
- id (cuid)                 id (cuid)               role: USER | ASSISTANT | SYSTEM
- email (unique)            title (auto-generated)  content (structured JSON payload)
- hashedPassword (bcrypt)   userId (FK)             conversationId (FK)
- createdAt / updatedAt     createdAt / updatedAt   createdAt
-```
 
 ---
 
