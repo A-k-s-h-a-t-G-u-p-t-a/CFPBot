@@ -1,12 +1,12 @@
-# CFPBot — Conversational Financial Performance Bot
+# MetricLens — Conversational Financial Performance Bot
 
 > **NatWest Hackathon Submission** · Built for financial analysts who need instant, accurate answers from transaction data — no SQL required.
 
 ---
 
-## What is CFPBot?
+## What is MetricLens?
 
-CFPBot is an **AI-powered analytics chatbot** purpose-built for financial data. It lets analysts ask plain-English questions like *"Why did mobile transactions drop last week?"* and receive data-backed, narrative answers with charts — in under a second.
+MetricLens is an **AI-powered analytics chatbot** purpose-built for financial data. It lets analysts ask plain-English questions like *"Why did mobile transactions drop last week?"* and receive data-backed, narrative answers with charts — in under a second.
 
 The core design principle: **the LLM never calculates numbers — it only narrates results.** Every figure comes from real SQL against real data. The AI is used for language understanding and storytelling, not arithmetic.
 
@@ -14,7 +14,7 @@ The core design principle: **the LLM never calculates numbers — it only narrat
 
 ## Architecture at a Glance
 
-![CFPBot System Architecture](docs/architecture.png)
+![MetricLens System Architecture](docs/architecture.png)
 
 ---
 
@@ -204,7 +204,7 @@ The Semantic Layer enforces hard rules that analysts forget:
 ## Project Structure
 
 ```
-CFPBot/
+MetricLens/
 ├── frontend/                         Next.js 16 app
 │   ├── src/
 │   │   ├── app/
@@ -342,7 +342,7 @@ Open [http://localhost:3000](http://localhost:3000)
 
 ---
 
-## Example Questions CFPBot Can Answer
+## Example Questions MetricLens Can Answer
 
 | Question | Pipeline Path |
 |---|---|
