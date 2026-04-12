@@ -14,7 +14,8 @@ The core design principle: **the LLM never calculates numbers — it only narrat
 
 ## Architecture at a Glance
 
-<img width="1407" height="826" alt="Architecture diagram - visual selection" src="https://github.com/user-attachments/assets/f8fd23d9-74ba-42e1-9022-f03cf32c8624" />
+<img width="1406" height="826" alt="Architecture diagram - visual selection (1)" src="https://github.com/user-attachments/assets/c6cba3f7-e296-439a-8232-3b4699ee53aa" />
+
 
 
 ---
