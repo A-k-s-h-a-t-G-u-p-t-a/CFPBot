@@ -2,19 +2,6 @@
 
 An AI analytics copilot that turns plain-English business questions into validated SQL, insights, and conversational answers.
 
-## Why This Project Exists
-
-Business teams need answers quickly, but traditional BI workflows require SQL skills, dashboard maintenance, and analyst bandwidth.
-
-MetricLens solves this by combining:
-- Natural-language understanding for analytics intent
-- Semantic metric mapping and business rules
-- Guarded SQL generation and execution
-- Insight extraction (trends, anomalies, drivers)
-- Conversational explanation in a chat interface
-
-This means users can ask questions like "Why did revenue drop this week?" and get reliable, explainable answers without writing SQL.
-
 ## Architecture Diagrams
 
 Add your two hackathon diagrams to these paths so they render in this README:
