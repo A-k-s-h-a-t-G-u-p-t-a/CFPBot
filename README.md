@@ -14,28 +14,7 @@ The core design principle: **the LLM never calculates numbers — it only narrat
 
 ## Architecture at a Glance
 
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                              CFPBot System                                   │
-│                                                                               │
-│   ┌──────────────────┐         REST / JSON          ┌──────────────────┐    │
-│   │                  │  ◄─────────────────────────► │                  │    │
-│   │   Next.js 16     │                               │  FastAPI 3.0     │    │
-│   │   Frontend       │         POST /api/query       │  Python Backend  │    │
-│   │                  │  ──────────────────────────►  │                  │    │
-│   │  React 19        │                               │  7-Layer Pipeline│    │
-│   │  Tailwind CSS 4  │  ◄──────────────────────────  │                  │    │
-│   │  Framer Motion   │         Structured JSON        │  Gemini + DuckDB │    │
-│   │                  │                               │  ChromaDB + numpy│    │
-│   └──────┬───────────┘                               └──────────────────┘    │
-│          │                                                                    │
-│          ▼                                                                    │
-│   ┌──────────────────┐                                                       │
-│   │   PostgreSQL     │  ← User accounts, conversations, message history      │
-│   │   (Neon/Prisma)  │                                                       │
-│   └──────────────────┘                                                       │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
+![CFPBot System Architecture](docs/architecture.png)
 
 ---
 
