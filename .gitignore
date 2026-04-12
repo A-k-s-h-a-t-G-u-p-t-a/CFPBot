@@ -38,3 +38,13 @@ Thumbs.db
 
 # Logs
 *.log
+
+# Node / Next.js generated artifacts (workspace root)
+node_modules/
+.next/
+out/
+coverage/
+next-env.d.ts
+
+# Backend runtime cache
+backend/data/cache_snapshot.pkl

@@ -1,26 +1,45 @@
+"""
+Vector store backed by Neon pgvector.
+Replaces chromadb + fastembed with Gemini text-embedding-004 + pgvector cosine search.
+
+Table schema (created by ingest.py):
+  embeddings(id SERIAL, collection TEXT, document TEXT, embedding vector(768))
+"""
 import os
 
-import chromadb
-from fastembed import TextEmbedding
+import psycopg
+import psycopg.rows
+from dotenv import load_dotenv
 
-_CHROMA_PATH = os.path.join(os.path.dirname(__file__), "../data/chroma_db")
-_model  = TextEmbedding(model_name="BAAI/bge-small-en-v1.5")
-_client = chromadb.PersistentClient(path=_CHROMA_PATH)
+from utils.gemini_embedder import embed_text
+
+load_dotenv()
+
+_DATABASE_URL = os.getenv("DATABASE_URL", "")
 
 
-def _embed(text: str) -> list[float]:
-    return list(_model.embed([text]))[0].tolist()
+def _connect() -> psycopg.Connection:
+    return psycopg.connect(_DATABASE_URL)
 
 
-def _query_collection(name: str, question: str, top_k: int) -> str:
+def _query_collection(collection: str, question: str, top_k: int) -> str:
     try:
-        col = _client.get_collection(name)
-        n   = min(top_k, col.count())
-        if n == 0:
-            return ""
-        results = col.query(query_embeddings=[_embed(question)], n_results=n)
-        return "\n".join(results["documents"][0])
-    except Exception:
+        embedding = embed_text(question)
+        embedding_str = "[" + ",".join(str(x) for x in embedding) + "]"
+        sql = """
+            SELECT document
+            FROM embeddings
+            WHERE collection = %s
+            ORDER BY embedding <=> %s::vector
+            LIMIT %s
+        """
+        with _connect() as conn:
+            with conn.cursor() as cur:
+                cur.execute(sql, (collection, embedding_str, top_k))
+                rows = cur.fetchall()
+                return "\n".join(r[0] for r in rows)
+    except Exception as e:
+        print(f"[vector_store] collection={collection} error: {e}")
         return ""
 
 
@@ -38,6 +57,10 @@ def get_relevant_examples(question: str, top_k: int = 2) -> str:
 
 def get_collection_count(name: str) -> int:
     try:
-        return _client.get_collection(name).count()
+        with _connect() as conn:
+            with conn.cursor() as cur:
+                cur.execute("SELECT COUNT(*) FROM embeddings WHERE collection = %s", (name,))
+                result = cur.fetchone()
+                return result[0] if result else 0
     except Exception:
         return 0

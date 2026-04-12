@@ -6,7 +6,7 @@ INTENT_RULES: dict[str, list[str]] = {
     "driver_analysis": ["why", "reason", "cause", "drove", "explain", "what caused",
                         "factor", "because of", "responsible for", "led to"],
     "summary":         ["summary", "overview", "report", "tell me about", "how are we doing",
-                        "what happened", "give me", "show me today", "this week's"],
+                        "what happened", "this week's performance", "weekly summary"],
     "trend":           ["trend", "over time", "growing", "declining", "trajectory",
                         "pattern", "week by week", "month by month", "history of"],
 }

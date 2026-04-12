@@ -9,7 +9,7 @@ load_dotenv()
 
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 
-_model = genai.GenerativeModel("gemini-2.0-flash")
+_model = genai.GenerativeModel("gemini-2.5-flash")
 
 # Cap concurrent Gemini calls to stay within free-tier rate limits
 _semaphore = asyncio.Semaphore(4)

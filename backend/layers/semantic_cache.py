@@ -22,11 +22,16 @@ class SemanticCache:
         self._misses = 0
         self._load_snapshot()
 
-    def lookup(self, question: str) -> Optional[dict]:
+    def lookup(self, question: str, cache_key: str | None = None) -> Optional[dict]:
         emb = self._embed(question)
         now = time.time()
         for entry in self._cache:
             if now - entry["ts"] > self.ttl_seconds:
+                continue
+            if cache_key is not None:
+                if entry.get("key") == cache_key:
+                    self._hits += 1
+                    return entry["answer"]
                 continue
             if float(np.dot(emb, entry["emb"])) >= self.threshold:
                 self._hits += 1
@@ -34,11 +39,12 @@ class SemanticCache:
         self._misses += 1
         return None
 
-    def store(self, question: str, answer: dict):
+    def store(self, question: str, answer: dict, cache_key: str | None = None):
         self._cache.append({
             "emb":    self._embed(question),
             "answer": answer,
             "ts":     time.time(),
+            "key":    cache_key,
         })
         self._save_snapshot()
 

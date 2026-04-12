@@ -1,37 +1,47 @@
+"""
+Neon PostgreSQL execution engine.
+Replaces duckdb_engine.py — all analytics queries now run against Neon Postgres.
+"""
 import os
 
-import psycopg2
-import psycopg2.pool
+import psycopg
 from dotenv import load_dotenv
 
 load_dotenv()
 
-_pool: psycopg2.pool.SimpleConnectionPool | None = None
+_DATABASE_URL = os.getenv("DATABASE_URL", "")
 
 
-def _get_pool() -> psycopg2.pool.SimpleConnectionPool | None:
-    global _pool
-    if _pool is None:
-        db_url = os.getenv("DB_URL")
-        if db_url:
-            try:
-                _pool = psycopg2.pool.SimpleConnectionPool(1, 5, db_url)
-            except Exception as e:
-                print(f"[PostgreSQL] Connection failed: {e}")
-    return _pool
+def _connect() -> psycopg.Connection:
+    return psycopg.connect(_DATABASE_URL)
+
+
+def execute_analytics_query(sql: str) -> list[dict]:
+    """
+    Run a read-only SELECT against Neon Postgres.
+    Caps at 1000 rows to prevent runaway queries.
+    """
+    if "LIMIT" not in sql.upper():
+        sql = sql.rstrip(";") + " LIMIT 1000"
+    with _connect() as conn:
+        with conn.cursor(row_factory=psycopg.rows.dict_row) as cur:
+            cur.execute(sql)
+            return cur.fetchall()
 
 
 def execute_safe_query(sql: str) -> list[dict]:
-    pool = _get_pool()
-    if not pool:
-        return []
-    conn = pool.getconn()
+    """Alias used by legacy imports."""
+    return execute_analytics_query(sql)
+
+
+def row_count() -> int:
+    """Returns total rows in the orders table — used for startup health check."""
     try:
-        with conn.cursor() as cur:
-            cur.execute(sql)
-            columns = [desc[0] for desc in cur.description]
-            return [dict(zip(columns, row)) for row in cur.fetchmany(1000)]
+        with _connect() as conn:
+            with conn.cursor() as cur:
+                cur.execute("SELECT COUNT(*) FROM orders")
+                result = cur.fetchone()
+                return result[0] if result else 0
     except Exception as e:
-        raise RuntimeError(f"PostgreSQL query failed: {e}") from e
-    finally:
-        pool.putconn(conn)
+        print(f"[pg_engine] row_count failed: {e}")
+        return 0

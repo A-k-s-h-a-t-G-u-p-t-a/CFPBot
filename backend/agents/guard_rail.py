@@ -1,14 +1,10 @@
-from layers.insight_engine.models import EmptyInsight, StructuredInsights
-
-
-def guard_rail_check(answer: str, insights: StructuredInsights, confidence: float) -> str:
+def guard_rail_check(answer: str, reasoning, confidence: float) -> str:
     """
-    Post-processes the answer without an LLM call:
-    - Overrides with 'no data' message when insights are empty
+    Post-processes the answer without an LLM call.
     - Appends a low-confidence disclaimer when confidence < 0.7
     """
-    if isinstance(insights.key_finding, EmptyInsight):
-        return insights.key_finding.message
+    if not answer or not answer.strip():
+        return "I don't have enough data to answer that question. Try rephrasing or selecting a different time period."
 
     if confidence < 0.7:
         answer = (
