@@ -1,41 +1,88 @@
 "use client";
 import { HeroHighlight, Highlight } from "@/src/components/ui/hero-highlight";
 import { motion } from "framer-motion";
+import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 
 export function HeroHighlightDemo() {
   return (
     <HeroHighlight className="mt-40">
+      {/* Badge */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
+        className="flex justify-center mb-5"
+      >
+        <span className="inline-flex items-center gap-2 rounded-full border border-neutral-700 bg-neutral-900/80 backdrop-blur-sm px-4 py-1.5 text-xs font-medium text-neutral-300 dark:text-neutral-300">
+          <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" />
+          AI-powered business metric intelligence
+        </span>
+      </motion.div>
+
+      {/* Headline */}
       <motion.h1
-        initial={{
-          opacity: 0,
-          y: 20,
-        }}
-        animate={{
-          opacity: 1,
-          y: [20, -5, 0],
-        }}
-        transition={{
-          duration: 0.5,
-          ease: [0.4, 0.0, 0.2, 1],
-        }}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: [20, -5, 0] }}
+        transition={{ duration: 0.5, ease: [0.4, 0.0, 0.2, 1], delay: 0.1 }}
         className="text-2xl px-4 md:text-4xl lg:text-5xl font-bold text-neutral-700 dark:text-white max-w-4xl leading-relaxed lg:leading-snug text-center mx-auto"
       >
-        MetricLens explains what changed. {" "}
+        MetricLens explains what changed.{" "}
         <Highlight className="text-black dark:text-white">
-         Fast. Clear. Cited.
+          Fast. Clear. Cited.
         </Highlight>
       </motion.h1>
-      <div className="mt-10 flex justify-center gap-4">
-        <Link href="/signup"
-        className="px-6 py-3 rounded-2xl bg-black text-white dark:bg-white dark:text-black font-semibold hover:scale-105 transition">
-          Explore MetricLens
+
+      {/* Subtitle */}
+      <motion.p
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.3 }}
+        className="mt-5 text-center text-base text-neutral-500 dark:text-neutral-400 max-w-lg mx-auto px-4 leading-relaxed"
+      >
+        Ask any business question. Get a structured answer with the drivers,
+        context, and source data — in plain English.
+      </motion.p>
+
+      {/* CTAs */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.4 }}
+        className="mt-8 flex flex-col sm:flex-row justify-center items-center gap-3"
+      >
+        <Link
+          href="/signup"
+          className="group inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-white text-black text-sm font-semibold hover:bg-neutral-100 transition-all shadow-sm"
+        >
+          Get started free
+          <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
         </Link>
-        <Link href="/signup"
-          className="px-6 py-3 rounded-2xl border border-black dark:border-white text-black dark:text-white font-semibold hover:scale-105 transition">
-          Start Chatting
+        <Link
+          href="/signup"
+          className="inline-flex items-center gap-2 px-6 py-3 rounded-xl border border-neutral-700 dark:border-neutral-600 text-neutral-700 dark:text-neutral-300 text-sm font-semibold hover:border-neutral-500 dark:hover:border-neutral-400 transition-all"
+        >
+          See it in action
         </Link>
-      </div>
+      </motion.div>
+
+      {/* Social proof pills */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.4, delay: 0.6 }}
+        className="mt-7 flex flex-wrap justify-center items-center gap-x-6 gap-y-2 text-xs text-neutral-500 dark:text-neutral-600"
+      >
+        <span className="flex items-center gap-1.5">
+          <span className="text-green-500">✓</span> Source-cited answers
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="text-green-500">✓</span> Real business metrics
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="text-green-500">✓</span> No setup required
+        </span>
+      </motion.div>
     </HeroHighlight>
   );
 }
