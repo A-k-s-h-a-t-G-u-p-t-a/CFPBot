@@ -1,4 +1,5 @@
 import json
+from datetime import datetime
 
 from agents.reasoning_chain import ReasoningResult
 from utils.gemini_client import call_gemini
@@ -21,6 +22,56 @@ _INTENT_VOICE = {
     "compare":         "State the winner first, then the delta and % change. Note if the difference is statistically meaningful (>=5%).",
     "summary":         "Use a natural, conversational tone. Summarize the most useful finding first, then add context if it helps.",
 }
+
+
+def _fmt_number(value) -> str:
+    try:
+        return f"{float(value):,.2f}"
+    except Exception:
+        return str(value)
+
+
+def _fmt_date(value) -> str:
+    if isinstance(value, datetime):
+        return value.strftime("%Y-%m-%d")
+    text = str(value)
+    return text[:10] if len(text) >= 10 else text
+
+
+def _fallback_answer(reasoning: ReasoningResult, metric_label: str) -> str:
+    ctx = reasoning.narrative_context or {}
+    rows = ctx.get("rows") or reasoning.rows or []
+
+    if not rows:
+        return f"I could not generate a narrative right now, but the query executed successfully for {metric_label}."
+
+    first = rows[0]
+    keys = [k for k in first.keys()]
+    if len(keys) >= 2:
+        dim_key = keys[0]
+        val_key = keys[1]
+        top_dim = first.get(dim_key)
+        top_val = first.get(val_key)
+        return (
+            f"I could not use the language model just now, but your query ran successfully. "
+            f"Top result: {top_dim} with {metric_label} = {_fmt_number(top_val)}."
+        )
+
+    only_key = keys[0] if keys else "value"
+    return (
+        f"I could not use the language model just now, but your query ran successfully. "
+        f"{metric_label}: {_fmt_number(first.get(only_key))}."
+    )
+
+
+def _fallback_follow_up(reasoning: ReasoningResult) -> str:
+    ctx = reasoning.narrative_context or {}
+    time_window = ctx.get("time_window") or {}
+    start = time_window.get("start")
+    end = time_window.get("end")
+    if start and end:
+        return f"Would you like a comparison against the previous period ({_fmt_date(start)} to {_fmt_date(end)})?"
+    return "Would you like a breakdown by region or channel next?"
 
 
 def _parse_json(text: str) -> dict:
@@ -87,12 +138,12 @@ Respond in JSON: {{"answer": "...", "follow_up": "...", "anomaly_flag": "..." or
 
 def _build_response(result: dict, reasoning: ReasoningResult, metric_label: str) -> dict:
     return {
-        "answer":        result.get("answer") or str(reasoning.narrative_context),
+        "answer":        result.get("answer") or _fallback_answer(reasoning, metric_label),
         "chart_type":    reasoning.chart_spec.get("type") if reasoning.chart_spec else None,
         "chart_data":    reasoning.chart_spec,
         "metric_used":   metric_label,
         "source_tables": ["orders"],
-        "follow_up":     result.get("follow_up", "Would you like to explore further?"),
+        "follow_up":     result.get("follow_up") or _fallback_follow_up(reasoning),
         "confidence":    0.9,
         "anomaly_flag":  result.get("anomaly_flag") or reasoning.anomaly_flag,
         "intent":        reasoning.intent,

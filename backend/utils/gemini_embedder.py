@@ -12,7 +12,7 @@ load_dotenv()
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 
 _PRIMARY_EMBEDDING_MODEL = os.getenv("GEMINI_EMBED_MODEL", "models/text-embedding-004")
-_FALLBACK_EMBEDDING_MODEL = os.getenv("GEMINI_EMBED_FALLBACK_MODEL", "models/embedding-001")
+_FALLBACK_EMBEDDING_MODEL = os.getenv("GEMINI_EMBED_FALLBACK_MODEL", "models/text-embedding-004")
 
 
 def embed_text(text: str) -> list[float]:
